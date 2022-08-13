@@ -64,21 +64,18 @@ def build_set_data(prime_part_list):
     print(set_list)
 
 
-with open("drop_table.html", "r") as f:
-    drop_table = f.read()
-
-build_relic_list(drop_table)
+def encode_and_compress(json_file):
+    encoded_list = json.dumps(json_file).encode('utf-8')
+    
+    return encoded_list
 
 
 def build_files():
     with open("drop_table.html", "r") as f:
         drop_table = f.read()
 
-    relic_list = json.dumps(build_relic_list(drop_table))
-    encoded_list = relic_list.encode('utf-8')
-
-    with gzip.open('relic_list.json.gz', 'wb') as fp:
-        fp.write(encoded_list)
+    with gzip.open('/var/www/html/index/relic_list.json.gz', 'wb') as fp:
+        fp.write(encode_and_compress(build_relic_list(drop_table)))
 
     with open('price_history_2022-08-08.json', 'r') as f:
         price_history = json.load(f)
@@ -88,10 +85,8 @@ def build_files():
         if ' Prime ' in item:
             price_data[item] = price_history[item][0]['avg_price']
 
-    encoded_list = json.dumps(price_data).encode('utf-8')
-
-    with gzip.open('price_data.json.gz', 'wb') as fp:
-        fp.write(encoded_list)
+    with gzip.open('/var/www/html/index/price_data.json.gz', 'wb') as fp:
+        fp.write(encode_and_compress(price_data))
 
 
 def decompress_lzma(data):
@@ -144,55 +139,64 @@ def get_manifest():
             recipes = decode_manifest_file(item)
         elif "ExportResources" in item:
             resources = decode_manifest_file(item)
+        elif "ExportWarframes" in item:
+            warframes = decode_manifest_file(item)
+        elif "ExportWeapons" in item:
+            weapons = decode_manifest_file(item)
 
-    return recipes, resources
+    return recipes, resources, warframes, weapons
 
 
-def parse_name(name, parser):
-    if name in parser:
-        if isinstance(parser[name], dict):
-            mission_node = parser[name]['node']
-            if 'planet' in parser[name]:
-                mission_node += f" - {parser[name]['planet']}"
-            return mission_node
-        else:
-            if parser[name] == '':
-                print(name)
+def build_parser(resources, warframes, weapons):
+    parser = {}
 
-            if parser[name] in parser:
-                return parser[parser[name]]
-            else:
-                return parser[name]
-    else:
-        return name
+    for item in resources['ExportResources']:
+        if "Prime" in item['name']:
+            parser[item['uniqueName']] = item['name']
+    
+    for item in warframes['ExportWarframes']:
+        if "Prime" in item['name']:
+            item_name = item['name']
+            if '<ARCHWING>' in item['name']:
+                item_name = item_name.split(maxsplit=1)[1]
+            parser[item['uniqueName']] = item_name
+
+    for item in weapons['ExportWeapons']:
+        if "Prime" in item['name'] and item['productCategory'] not in ['SpecialItems', 'SentinelWeapons']:
+            parser[item['uniqueName']] = item['name']
+    
+    return parser
 
 
 def get_ducat_required_data():
-    with open('manifest/ExportRecipes.json') as f:
-        recipes = json.load(f)
+    recipes, resources, warframes, weapons = get_manifest()
 
-    with open('manifest/ExportResources.json') as f:
-        resources = json.load(f)
-
-    with open('json/parser.json') as f:
-        parser = json.load(f)
+    parser = build_parser(resources, warframes, weapons)
 
     required_dict = {}
     ducat_dict = {}
 
     for item in recipes['ExportRecipes']:
-        if "primeSellingPrice" in item:
-            item_name = parse_name(item['uniqueName'], parser) + " Blueprint"
+        if item['resultType'] in parser:
+            item_name = parser[item['resultType']] + " Blueprint"
 
             ducat_dict[item_name] = item['primeSellingPrice']
 
             for sub_item in item['ingredients']:
-                item_name = parse_name(sub_item['ItemType'], parser)
-                if " Prime " in item_name and sub_item['ItemCount'] > 1:
-                    required_dict[item_name] = sub_item['ItemCount']
+                if sub_item['ItemType'] in parser:
+                    item_name = parser[sub_item['ItemType']]
+                    if sub_item['ItemCount'] > 1:
+                        required_dict[item_name] = sub_item['ItemCount']
 
     for item in resources['ExportResources']:
-        if "primeSellingPrice" in item:
-            item_name = parse_name(item['uniqueName'], parser)
-            if item_name + " Blueprint" not in ducat_dict:
-                ducat_dict[item_name] = item['primeSellingPrice']
+        if 'primeSellingPrice' in item:
+            ducat_dict[item['name']] = item['primeSellingPrice']
+    
+    with gzip.open('/var/www/html/index/ducat_data.json.gz', 'wb') as fp:
+        fp.write(encode_and_compress(ducat_data))
+    
+    with gzip.open('/var/www/html/index/required_data.json.gz', 'wb') as fp:
+        fp.write(encode_and_compress(required_data))
+
+build_files()
+get_ducat_required_data()
