@@ -70,6 +70,15 @@ def encode_and_compress(json_file):
     return encoded_list
 
 
+def get_price_history(pd_file=None):
+    if pd_file is None:
+        soup = BeautifulSoup(requests.get('http://23.95.43.245/history/').text, 'html.parser')
+        return requests.get(sorted(['http://23.95.43.245/history/' + node.get('href')
+                                    for node in soup.find_all('a') if node.get('href').endswith('json')])[-1]).json()
+    else:
+        return requests.get(f"http://23.95.43.245/history/{pd_file}").json()
+
+
 def build_files():
     with open("drop_table.html", "r") as f:
         drop_table = f.read()
@@ -77,8 +86,7 @@ def build_files():
     with gzip.open('/var/www/html/index/relic_list.json.gz', 'wb') as fp:
         fp.write(encode_and_compress(build_relic_list(drop_table)))
 
-    with open('price_history_2022-08-08.json', 'r') as f:
-        price_history = json.load(f)
+    price_history = get_price_history()
 
     price_data = {}
     for item in price_history:
