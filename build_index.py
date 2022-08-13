@@ -44,8 +44,6 @@ def build_relic_list(drop_table):
 
         relic_list[relic] = dict(sorted(relic_drops.items(), reverse=True, key=lambda x: str(x[1])))
 
-    build_set_data(set(prime_part_list))
-
     return relic_list
 
 
@@ -201,10 +199,10 @@ def get_ducat_required_data():
             ducat_dict[item['name']] = item['primeSellingPrice']
     
     with gzip.open('/var/www/html/index/ducat_data.json.gz', 'wb') as fp:
-        fp.write(encode_and_compress(ducat_data))
+        fp.write(encode_and_compress(ducat_dict))
     
     with gzip.open('/var/www/html/index/required_data.json.gz', 'wb') as fp:
-        fp.write(encode_and_compress(required_data))
+        fp.write(encode_and_compress(required_dict))
 
 build_files()
 get_ducat_required_data()
