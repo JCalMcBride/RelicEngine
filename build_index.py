@@ -2,15 +2,16 @@ import gzip
 import json
 import lzma
 import re
-from json import JSONDecodeError
+from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
 
-from main import get_set_name
 
+def build_relic_list(drop_table: Optional[str]):
+    if drop_table is None:
+        drop_table = requests.get('https://n8k6e2y6.ssl.hwcdn.net/repos/hnfvc0o3jnfvc873njb03enrf56.html').text
 
-def build_relic_list(drop_table):
     soup = BeautifulSoup(drop_table, 'lxml')
 
     tables = soup.find_all('tr',
@@ -54,17 +55,9 @@ def add_to_dict_list(dict, key, value):
         dict[key] = [value]
 
 
-def build_set_data(prime_part_list):
-    set_list = {}
-    for part in prime_part_list:
-        add_to_dict_list(set_list, get_set_name(part), part)
-
-    print(set_list)
-
-
 def encode_and_compress(json_file):
     encoded_list = json.dumps(json_file).encode('utf-8')
-    
+
     return encoded_list
 
 
@@ -77,22 +70,30 @@ def get_price_history(pd_file=None):
         return requests.get(f"http://23.95.43.245/history/{pd_file}").json()
 
 
-def build_files():
-    with open("drop_table.html", "r") as f:
-        drop_table = f.read()
-
-    with gzip.open('/var/www/html/index/relic_list.json.gz', 'wb') as fp:
-        fp.write(encode_and_compress(build_relic_list(drop_table)))
-
-    price_history = get_price_history()
+def build_price_data(price_history):
+    if price_history is None:
+        price_history = get_price_history()
 
     price_data = {}
     for item in price_history:
         if ' Prime ' in item:
             price_data[item] = price_history[item][0]['avg_price']
 
-    with gzip.open('/var/www/html/index/price_data.json.gz', 'wb') as fp:
-        fp.write(encode_and_compress(price_data))
+    return price_data
+
+
+def build_files(drop_table=None, price_history=None,
+                recipes=None, resources=None, warframes=None, weapons=None):
+    relic_list = build_relic_list(drop_table)
+    price_data = build_price_data(price_history)
+    ducat_data, required_data = get_ducat_required_data(recipes, resources, warframes, weapons)
+
+    index_file = {'relics': relic_list,
+                  'prices': price_data,
+                  'ducats': ducat_data,
+                  'required_count': required_data}
+
+    return index_file
 
 
 def decompress_lzma(data):
@@ -159,7 +160,7 @@ def build_parser(resources, warframes, weapons):
     for item in resources['ExportResources']:
         if "Prime" in item['name']:
             parser[item['uniqueName']] = item['name']
-    
+
     for item in warframes['ExportWarframes']:
         if "Prime" in item['name']:
             item_name = item['name']
@@ -170,12 +171,13 @@ def build_parser(resources, warframes, weapons):
     for item in weapons['ExportWeapons']:
         if "Prime" in item['name'] and item['productCategory'] not in ['SpecialItems', 'SentinelWeapons']:
             parser[item['uniqueName']] = item['name']
-    
+
     return parser
 
 
-def get_ducat_required_data():
-    recipes, resources, warframes, weapons = get_manifest()
+def get_ducat_required_data(recipes=None, resources=None, warframes=None, weapons=None):
+    if recipes is None or resources is None or warframes is None or weapons is None:
+        recipes, resources, warframes, weapons = get_manifest()
 
     parser = build_parser(resources, warframes, weapons)
 
@@ -197,12 +199,11 @@ def get_ducat_required_data():
     for item in resources['ExportResources']:
         if 'primeSellingPrice' in item:
             ducat_dict[item['name']] = item['primeSellingPrice']
-    
-    with gzip.open('/var/www/html/index/ducat_data.json.gz', 'wb') as fp:
-        fp.write(encode_and_compress(ducat_dict))
-    
-    with gzip.open('/var/www/html/index/required_data.json.gz', 'wb') as fp:
-        fp.write(encode_and_compress(required_dict))
 
-build_files()
-get_ducat_required_data()
+    return ducat_dict, required_dict
+
+
+index_file = build_files()
+
+with gzip.open('/var/www/html/index/index.json.gz', 'wb') as fp:
+    fp.write(encode_and_compress(index_file))

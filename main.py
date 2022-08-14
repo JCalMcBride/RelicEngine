@@ -13,11 +13,13 @@ def decode_and_decompress(url):
 def get_index_files():
     rl = decode_and_decompress("http://23.95.43.245/index/relic_list.json.gz")
     pd = decode_and_decompress("http://23.95.43.245/index/price_data.json.gz")
+    dd = decode_and_decompress("http://23.95.43.245/index/ducat_data.json.gz")
+    rd = decode_and_decompress("http://23.95.43.245/index/required_data.json.gz")
 
-    return rl, pd
+    return rl, pd, dd, rd
 
 
-relic_list, price_data = get_index_files()
+relic_list, price_data, ducat_data, required_data = get_index_files()
 
 rarity_dict = {
     'i': {
@@ -96,5 +98,3 @@ def get_average_return(relic, refinement, style):
     relic = calculate_average(relic, "4b4", 4, 1)
 
     return relic
-
-# print(get_relic_drops('Meso D1', 'i'))
