@@ -197,7 +197,7 @@ def get_ducat_required_data(recipes=None, resources=None, warframes=None, weapon
                         required_dict[item_name] = sub_item['ItemCount']
 
     for item in resources['ExportResources']:
-        if 'primeSellingPrice' in item:
+        if 'primeSellingPrice' in item and item['name'] + " Blueprint" not in ducat_dict:
             ducat_dict[item['name']] = item['primeSellingPrice']
 
     return ducat_dict, required_dict

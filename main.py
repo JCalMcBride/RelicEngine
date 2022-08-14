@@ -182,7 +182,11 @@ def get_average_return(relic, arg1=None, arg2=None):
     else:
         average_return = calculate_average(drops, average_dict[style])
 
-    return average_return
+    return round(average_return, 3)
 
 
-print(get_average_return('Meso D1', '8b8r'))
+def get_set(set_name):
+    print(list(filter(lambda x: set_name in x, ducat_data)))
+
+
+get_set("Volt Prime")
