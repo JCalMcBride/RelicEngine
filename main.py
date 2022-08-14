@@ -10,16 +10,17 @@ def decode_and_decompress(url):
     return json.loads(file.decode("utf-8"))
 
 
-def get_index_files():
-    rl = decode_and_decompress("http://23.95.43.245/index/relic_list.json.gz")
-    pd = decode_and_decompress("http://23.95.43.245/index/price_data.json.gz")
-    dd = decode_and_decompress("http://23.95.43.245/index/ducat_data.json.gz")
-    rd = decode_and_decompress("http://23.95.43.245/index/required_data.json.gz")
+def get_index_file():
+    index = decode_and_decompress("http://23.95.43.245/index/index.json.gz")
 
-    return rl, pd, dd, rd
+    return index
 
 
-relic_list, price_data, ducat_data, required_data = get_index_files()
+index = get_index_file()
+relic_list = index['relics']
+price_data = index['prices']
+ducat_data = index['ducats']
+required_data = index['required_count']
 
 rarity_dict = {
     'i': {
@@ -76,25 +77,112 @@ def get_relic_drops(relic, refinement):
     return relic_drops
 
 
-def calculate_average(relic, param, param1, param2):
-    pass
+def fix_refinement_style(args):
+    style_list = ['s', '1', '2', '3', '4', '8']
+    refinement_list = ['i', 'e', 'f', 'r']
+
+    style = '4'
+    refinement = 'r'
+
+    for arg in args:
+        if arg is None:
+            continue
+
+        arg = arg.lower()
+        if arg[-1] in refinement_list:
+            refinement = arg[-1]
+
+        arg = arg[:1]
+        if arg in style_list:
+            style = arg
+        elif arg in refinement_list:
+            refinement = arg
+
+    return refinement, style
 
 
-def get_average_return(relic, refinement, style):
-    get_relic_drops(relic, refinement)
+def get_price(item):
+    if item in price_data:
+        return price_data[item]
+    else:
+        return 0
 
-    solo = 0
-    for drop in relic['drops']:
-        solo += relic['drops'][drop]['price'] * relic['drops'][drop]['chance']
 
-    solo = solo
-    one_by_one = solo * 4
+def get_relic_prices(drops):
+    relic_prices = {}
 
-    relic['average_return']['solo'] = round(solo, 0)
-    relic['average_return']['1b1'] = round(one_by_one, 0)
+    for drop in drops:
+        relic_prices[drop] = get_price(drop)
 
-    relic = calculate_average(relic, "2b2", 2, 2)
-    relic = calculate_average(relic, "3b3", 3, (4 / 3))
-    relic = calculate_average(relic, "4b4", 4, 1)
+    return relic_prices
 
-    return relic
+
+def calculate_average(drops, style_data):
+    modifier = style_data[0]
+    num_drops = style_data[1]
+    chance_left = 1
+    chance_used = 1
+    average_return = 0
+
+    relic_prices = get_relic_prices(drops)
+
+    relic_prices = {k: v for k, v in sorted(relic_prices.items(), key=lambda item: item[1], reverse=True)}
+
+    for item_name in relic_prices:
+        chance = drops[item_name]
+        price = relic_prices[item_name]
+
+        if not isinstance(chance, list):
+            chance = [chance]
+
+        for drop_chance in chance:
+            adj_chance = 1 - (drop_chance / chance_left)
+
+            actual_chance = adj_chance ** modifier
+
+            item_chance = 1 - actual_chance
+
+            item_chance = chance_used * item_chance
+
+            chance_left = chance_left - drop_chance
+
+            chance_used = chance_used * actual_chance
+
+            adj_price = price * item_chance
+
+            average_return += adj_price * num_drops
+
+    return average_return
+
+
+def get_average_return(relic, arg1=None, arg2=None):
+    average_dict = {'s': 1,
+                    '1': 4,
+                    '2': [2, 2],
+                    '3': [3, (4 / 3)],
+                    '4': [4, 1],
+                    '8': [8, 1]}
+
+    refinement, style = fix_refinement_style([arg1, arg2])
+
+    drops = get_relic_drops(relic, refinement)
+    average_return = 0
+    if not isinstance(average_dict[style], list):
+        for relic_drop in drops:
+            price = get_price(relic_drop)
+            chance = drops[relic_drop]
+
+            try:
+                average_return += price * chance
+            except TypeError:
+                for drop_chance in chance:
+                    average_return += price * drop_chance
+
+        average_return *= average_dict[style]
+    else:
+        average_return = calculate_average(drops, average_dict[style])
+
+    return average_return
+
+
+print(get_average_return('Meso D1', '8b8r'))
