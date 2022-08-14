@@ -108,6 +108,20 @@ def get_price(item):
         return 0
 
 
+def get_ducats(item):
+    if item in ducat_data:
+        return ducat_data[item]
+    else:
+        return 0
+
+
+def get_required_amount(item):
+    if item in required_data:
+        return required_data[item]
+    else:
+        return 1
+
+
 def get_relic_prices(drops):
     relic_prices = {}
 
@@ -185,8 +199,19 @@ def get_average_return(relic, arg1=None, arg2=None):
     return round(average_return, 3)
 
 
-def get_set(set_name):
-    print(list(filter(lambda x: set_name in x, ducat_data)))
+def get_set_parts(set_name):
+    return list(get_set_ducats(set_name))
 
 
-get_set("Volt Prime")
+def get_set_ducats(set_name):
+    return dict(filter(lambda x: set_name in x[0], ducat_data.items()))
+
+
+def get_set_required(set_name):
+    required_amount = {}
+    for item in get_set_parts(set_name):
+        required_amount[item] = get_required_amount(item)
+
+    return required_amount
+
+print(get_set_required("Dual Kamas Prime"))
