@@ -48,11 +48,11 @@ def build_relic_list(drop_table: Optional[str]):
     return relic_list
 
 
-def add_to_dict_list(dict, key, value):
-    if key in dict:
-        dict[key].append(value)
+def add_to_dict_list(dct, key, value):
+    if key in dct:
+        dct[key].append(value)
     else:
-        dict[key] = [value]
+        dct[key] = [value]
 
 
 def encode_and_compress(json_file):
@@ -63,11 +63,11 @@ def encode_and_compress(json_file):
 
 def get_price_history(pd_file=None):
     if pd_file is None:
-        soup = BeautifulSoup(requests.get('http://23.95.43.245/history/').text, 'html.parser')
-        return requests.get(sorted(['http://23.95.43.245/history/' + node.get('href')
+        soup = BeautifulSoup(requests.get('http://198.46.233.213/history/').text, 'html.parser')
+        return requests.get(sorted(['http://198.46.233.213/history/' + node.get('href')
                                     for node in soup.find_all('a') if node.get('href').endswith('json')])[-1]).json()
     else:
-        return requests.get(f"http://23.95.43.245/history/{pd_file}").json()
+        return requests.get(f"http://198.46.233.213/history/{pd_file}").json()
 
 
 def build_price_data(price_history):
