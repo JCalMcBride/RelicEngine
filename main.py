@@ -11,7 +11,7 @@ def decode_and_decompress(url):
 
 
 def get_index_file():
-    index = decode_and_decompress("http://23.95.43.245/index/index.json.gz")
+    index = decode_and_decompress("http://198.46.233.213/index/index.json.gz")
 
     return index
 
@@ -118,8 +118,8 @@ def get_ducats(item):
 def get_required_amount(item):
     if item in required_data:
         return required_data[item]
-    else:
-        return 1
+
+    return 1
 
 
 def get_relic_prices(drops):
@@ -214,4 +214,6 @@ def get_set_required(set_name):
 
     return required_amount
 
-print(get_set_required("Dual Kamas Prime"))
+
+
+print(get_average_return("Axi L4", '4b4', 'rad'))

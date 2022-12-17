@@ -45,7 +45,28 @@ def build_relic_list(drop_table: Optional[str]):
 
         relic_list[relic] = dict(sorted(relic_drops.items(), reverse=True, key=lambda x: str(x[1])))
 
-    return relic_list
+    tables = soup.find_all('tr', string=lambda t: t and any(x in t for x in ['(Exterminate)', '(Capture)', '(Defense)',
+                                                                             '(Mobile Defense)', '(Sabotage)',
+                                                                             '(Survival)', '(Rescue)', '(Caches)']))
+
+    nv_relics = set()
+    for table in tables:
+        items = table.find_all_next("tr", limit=20)
+
+        for item in items:
+            item_contents = item.find_all("td")
+
+            if not item.get_text():
+                break
+            if not item_contents:
+                continue
+
+            item_name = item_contents[0].contents[0]
+
+            if 'Relic' in item_name:
+                nv_relics.add(item_name)
+
+    return relic_list, nv_relics
 
 
 def add_to_dict_list(dct, key, value):
@@ -84,11 +105,12 @@ def build_price_data(price_history):
 
 def build_files(drop_table=None, price_history=None,
                 recipes=None, resources=None, warframes=None, weapons=None):
-    relic_list = build_relic_list(drop_table)
+    relic_list, nv_relics = build_relic_list(drop_table)
     price_data = build_price_data(price_history)
     ducat_data, required_data = get_ducat_required_data(recipes, resources, warframes, weapons)
 
     index_file = {'relics': relic_list,
+                  'non_vaulted': nv_relics,
                   'prices': price_data,
                   'ducats': ducat_data,
                   'required_count': required_data}
