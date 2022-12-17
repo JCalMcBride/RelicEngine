@@ -110,7 +110,7 @@ def build_files(drop_table=None, price_history=None,
     ducat_data, required_data = get_ducat_required_data(recipes, resources, warframes, weapons)
 
     index_file = {'relics': relic_list,
-                  'non_vaulted': nv_relics,
+                  'non_vaulted': list(nv_relics),
                   'prices': price_data,
                   'ducats': ducat_data,
                   'required_count': required_data}
