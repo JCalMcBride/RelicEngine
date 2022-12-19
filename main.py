@@ -21,6 +21,7 @@ relic_list = index['relics']
 price_data = index['prices']
 ducat_data = index['ducats']
 required_data = index['required_count']
+nv_relics = index['non_vaulted']
 
 rarity_dict = {
     'i': {
@@ -213,7 +214,3 @@ def get_set_required(set_name):
         required_amount[item] = get_required_amount(item)
 
     return required_amount
-
-
-
-print(get_average_return("Axi L4", '4b4', 'rad'))
