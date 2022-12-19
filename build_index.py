@@ -235,5 +235,5 @@ def get_ducat_required_data(recipes=None, resources=None, warframes=None, weapon
 
 index_file = build_files()
 
-with gzip.open('index.json.gz', 'wb') as fp:
+with gzip.open('/var/www/html/index/index.json.gz', 'wb') as fp:
     fp.write(encode_and_compress(index_file))
