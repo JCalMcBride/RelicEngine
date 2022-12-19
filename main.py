@@ -4,26 +4,26 @@ import json
 import requests
 
 
-def decode_and_decompress(url):
+def __decode_and_decompress(url):
     file = requests.get(url).content
     file = gzip.decompress(file)
     return json.loads(file.decode("utf-8"))
 
 
-def get_index_file():
-    index = decode_and_decompress("http://198.46.233.213/index/index.json.gz")
+def __get_index_file():
+    index = __decode_and_decompress("http://198.46.233.213/index/index.json.gz")
 
     return index
 
 
-index = get_index_file()
-relic_list = index['relics']
-price_data = index['prices']
-ducat_data = index['ducats']
-required_data = index['required_count']
-nv_relics = index['non_vaulted']
+__index = __get_index_file()
+__relic_dict = __index['relics']
+__price_dict = __index['prices']
+__ducat_dict = __index['ducats']
+__required_dict = __index['required_count']
+__nv_relics = __index['non_vaulted']
 
-rarity_dict = {
+__rarity_dict = {
     'i': {
         1: ((25 + (1 / 3)) / 100),
         2: .11,
@@ -57,11 +57,11 @@ def get_set_name(prime_part):
 
 def get_drop_chance(refinement: str, rarity_id: int):
     try:
-        return rarity_dict[refinement[0]][rarity_id]
+        return __rarity_dict[refinement[0]][rarity_id]
     except KeyError:
         drop_chances = []
         for digit in str(rarity_id):
-            if int(digit) in rarity_dict[refinement[0]]:
+            if int(digit) in __rarity_dict[refinement[0]]:
                 drop_chances.append(get_drop_chance(refinement[0], int(digit)))
             else:
                 return 'N/A'
@@ -72,7 +72,7 @@ def get_drop_chance(refinement: str, rarity_id: int):
 def get_relic_drops(relic, refinement):
     relic_drops = {}
 
-    for drop in relic_list[relic].items():
+    for drop in __relic_dict[relic].items():
         relic_drops[drop[0]] = get_drop_chance(refinement, drop[1])
 
     return relic_drops
@@ -103,22 +103,22 @@ def fix_refinement_style(args):
 
 
 def get_price(item):
-    if item in price_data:
-        return price_data[item]
+    if item in __price_dict:
+        return __price_dict[item]
     else:
         return 0
 
 
 def get_ducats(item):
-    if item in ducat_data:
-        return ducat_data[item]
+    if item in __ducat_dict:
+        return __ducat_dict[item]
     else:
         return 0
 
 
 def get_required_amount(item):
-    if item in required_data:
-        return required_data[item]
+    if item in __required_dict:
+        return __required_dict[item]
 
     return 1
 
@@ -205,7 +205,39 @@ def get_set_parts(set_name):
 
 
 def get_set_ducats(set_name):
-    return dict(filter(lambda x: set_name in x[0], ducat_data.items()))
+    return dict(filter(lambda x: set_name in x[0], __ducat_dict.items()))
+
+
+def get_set_list():
+    return list(filter(lambda x: 'Set' in x, __price_dict.keys()))
+
+
+def get_relic_list():
+    return list(__relic_dict)
+
+
+def get_relic_dict():
+    return __relic_dict
+
+
+def get_required_dict():
+    return __required_dict
+
+
+def get_ducat_dict():
+    return __ducat_dict
+
+
+def get_price_dict():
+    return __price_dict
+
+
+def get_non_vaulted_relics():
+    return __nv_relics
+
+
+def get_vaulted_relics():
+    return list(set(__relic_dict) - set(__nv_relics))
 
 
 def get_set_required(set_name):

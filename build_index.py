@@ -23,7 +23,12 @@ def build_relic_list(drop_table: Optional[str]):
     for table in tables:
         items = table.find_all_next("tr", limit=6)
 
-        relic = table.find("th").contents[0].split("Relic")[0].rstrip()
+        raw_relic = table.find("th").contents[0].split("Relic")[0].rstrip().split()
+
+        try:
+            relic = f"{raw_relic[0]} {raw_relic[1].upper()}"
+        except IndexError:
+            continue
 
         chance_dict = {'Uncommon (25.33%)': 1, 'Uncommon (11.00%)': 2, 'Rare (2.00%)': 3}
 
@@ -47,7 +52,8 @@ def build_relic_list(drop_table: Optional[str]):
 
     tables = soup.find_all('tr', string=lambda t: t and any(x in t for x in ['(Exterminate)', '(Capture)', '(Defense)',
                                                                              '(Mobile Defense)', '(Sabotage)',
-                                                                             '(Survival)', '(Rescue)', '(Caches)']))
+                                                                             '(Survival)', '(Rescue)', '(Caches)',
+                                                                             'Kuva Siphon', 'Kuva Flood']))
 
     nv_relics = set()
     for table in tables:
@@ -64,7 +70,9 @@ def build_relic_list(drop_table: Optional[str]):
             item_name = item_contents[0].contents[0]
 
             if 'Relic' in item_name:
-                nv_relics.add(item_name)
+                raw_relic = item_name.split()
+                relic = f"{raw_relic[0]} {raw_relic[1].upper()}"
+                nv_relics.add(relic)
 
     return relic_list, nv_relics
 
@@ -77,7 +85,7 @@ def add_to_dict_list(dct, key, value):
 
 
 def encode_and_compress(json_file):
-    encoded_list = json.dumps(json_file).encode('utf-8')
+    encoded_list = json.dumps(json_file, indent=4).encode('utf-8')
 
     return encoded_list
 
@@ -227,5 +235,5 @@ def get_ducat_required_data(recipes=None, resources=None, warframes=None, weapon
 
 index_file = build_files()
 
-with gzip.open('/var/www/html/index/index.json.gz', 'wb') as fp:
+with gzip.open('index.json.gz', 'wb') as fp:
     fp.write(encode_and_compress(index_file))
