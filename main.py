@@ -260,5 +260,3 @@ def get_set_required(set_name):
 
     return required_amount
 
-
-print(get_set_type('Volt Prime'))
