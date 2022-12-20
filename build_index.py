@@ -260,8 +260,6 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
         if 'Prime' in item['name']:
             type_dict[item['name']] = item['productCategory']
 
-    print(type_dict)
-
     return ducat_dict, required_dict, type_dict
 
 
