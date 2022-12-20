@@ -22,6 +22,7 @@ __price_dict = __index['prices']
 __ducat_dict = __index['ducats']
 __required_dict = __index['required_count']
 __nv_relics = __index['non_vaulted']
+__type_dict = __index['types']
 
 __rarity_dict = {
     'i': {
@@ -234,6 +235,18 @@ def get_price_dict():
 
 def get_non_vaulted_relics():
     return __nv_relics
+
+
+def get_type_dict():
+    return __type_dict
+
+
+def get_set_type(item):
+    item_type = None
+    if item in __type_dict:
+        item_type = __type_dict[item_type]
+
+    return item_type
 
 
 def get_vaulted_relics():

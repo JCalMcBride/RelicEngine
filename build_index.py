@@ -115,13 +115,14 @@ def build_files(drop_table=None, price_history=None,
                 recipes=None, resources=None, warframes=None, weapons=None):
     relic_list, nv_relics = build_relic_list(drop_table)
     price_data = build_price_data(price_history)
-    ducat_data, required_data = get_ducat_required_data(recipes, resources, warframes, weapons)
+    ducat_data, required_data, type_data = get_mainfest_data(recipes, resources, warframes, weapons)
 
     index_file = {'relics': relic_list,
                   'non_vaulted': list(nv_relics),
                   'prices': price_data,
                   'ducats': ducat_data,
-                  'required_count': required_data}
+                  'required_count': required_data,
+                  'types': type_data}
 
     return index_file
 
@@ -180,8 +181,10 @@ def get_manifest():
             warframes = decode_manifest_file(item)
         elif "ExportWeapons" in item:
             weapons = decode_manifest_file(item)
+        elif "ExportSentinels" in item:
+            sentinels = decode_manifest_file(item)
 
-    return recipes, resources, warframes, weapons
+    return recipes, resources, warframes, weapons, sentinels
 
 
 def build_parser(resources, warframes, weapons):
@@ -205,14 +208,15 @@ def build_parser(resources, warframes, weapons):
     return parser
 
 
-def get_ducat_required_data(recipes=None, resources=None, warframes=None, weapons=None):
-    if recipes is None or resources is None or warframes is None or weapons is None:
-        recipes, resources, warframes, weapons = get_manifest()
+def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None, sentinels=None):
+    if any(x is None for x in [recipes, resources, warframes, weapons, sentinels]):
+        recipes, resources, warframes, weapons, sentinels = get_manifest()
 
     parser = build_parser(resources, warframes, weapons)
 
     required_dict = {}
     ducat_dict = {}
+    type_dict = {}
 
     for item in recipes['ExportRecipes']:
         if item['resultType'] in parser:
@@ -230,7 +234,35 @@ def get_ducat_required_data(recipes=None, resources=None, warframes=None, weapon
         if 'primeSellingPrice' in item and item['name'] + " Blueprint" not in ducat_dict:
             ducat_dict[item['name']] = item['primeSellingPrice']
 
-    return ducat_dict, required_dict
+    for item in warframes['ExportWarframes']:
+        if ' Prime' in item['name']:
+            type_dict[item['name'].lstrip('<ARCHWING> ')] = 'Warframes'
+
+    translation_dict = {
+        'LongGuns': 'Primary',
+        'Pistols': 'Secondary',
+        'SpaceMelee': 'Archmelee',
+        'SpaceGuns': 'Archgun',
+    }
+
+    for item in weapons['ExportWeapons']:
+        if 'Prime' in item['name']:
+            item_type = item['productCategory']
+            if item_type in translation_dict:
+                item_type = translation_dict[item_type]
+
+            if item_type in ['SpecialItems', 'SentinelWeapons']:
+                continue
+
+            type_dict[item['name']] = item_type
+
+    for item in sentinels['ExportSentinels']:
+        if 'Prime' in item['name']:
+            type_dict[item['name']] = item['productCategory']
+
+    print(type_dict)
+
+    return ducat_dict, required_dict, type_dict
 
 
 index_file = build_files()
