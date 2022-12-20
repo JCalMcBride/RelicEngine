@@ -244,7 +244,7 @@ def get_type_dict():
 def get_set_type(item):
     item_type = None
     if item in __type_dict:
-        item_type = __type_dict[item_type]
+        item_type = __type_dict[item]
 
     return item_type
 
@@ -259,3 +259,6 @@ def get_set_required(set_name):
         required_amount[item] = get_required_amount(item)
 
     return required_amount
+
+
+print(get_set_type('Volt Prime'))
