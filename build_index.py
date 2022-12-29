@@ -258,8 +258,8 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
 
             type_dict[item['name']] = item_type
 
-    for item in sentinels['ExportSentinels'] and item['productCategory'] not in ['SpecialItems']:
-        if 'Prime' in item['name'] and item['productCategory']:
+    for item in sentinels['ExportSentinels']:
+        if 'Prime' in item['name'] and item['productCategory'] not in ['SpecialItems']:
             type_dict[item['name']] = item['productCategory']
 
     return ducat_dict, required_dict, type_dict
