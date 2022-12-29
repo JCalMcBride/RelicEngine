@@ -2,6 +2,7 @@ import gzip
 import json
 import lzma
 import re
+from pprint import pprint
 from typing import Optional
 
 import requests
@@ -216,7 +217,7 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
 
     required_dict = {}
     ducat_dict = {}
-    type_dict = {}
+    type_dict = {'Kavasa Prime': 'Skins'}
 
     for item in recipes['ExportRecipes']:
         if item['resultType'] in parser:
@@ -236,7 +237,11 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
 
     for item in warframes['ExportWarframes']:
         if ' Prime' in item['name']:
-            type_dict[item['name'].lstrip('<ARCHWING> ')] = 'Warframes'
+            item_name = item['name']
+            if '<ARCHWING>' in item_name:
+                item_name = item_name[11:]
+            type_dict[item_name] = 'Warframes'
+
 
     translation_dict = {
         'LongGuns': 'Primary',
@@ -245,25 +250,23 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
         'SpaceGuns': 'Archgun',
     }
 
-    for item in weapons['ExportWeapons']:
+    for item in weapons['ExportWeapons'] and item['productCategory'] not in ['SpecialItems', 'SentinelWeapons']:
         if 'Prime' in item['name']:
             item_type = item['productCategory']
             if item_type in translation_dict:
                 item_type = translation_dict[item_type]
 
-            if item_type in ['SpecialItems', 'SentinelWeapons']:
-                continue
-
             type_dict[item['name']] = item_type
 
-    for item in sentinels['ExportSentinels']:
-        if 'Prime' in item['name']:
+    for item in sentinels['ExportSentinels'] and item['productCategory'] not in ['SpecialItems']:
+        if 'Prime' in item['name'] and item['productCategory']:
             type_dict[item['name']] = item['productCategory']
 
     return ducat_dict, required_dict, type_dict
 
 
 index_file = build_files()
+
 
 with gzip.open('/var/www/html/index/index.json.gz', 'wb') as fp:
     fp.write(encode_and_compress(index_file))
