@@ -250,8 +250,8 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
         'SpaceGuns': 'Archgun',
     }
 
-    for item in weapons['ExportWeapons'] and item['productCategory'] not in ['SpecialItems', 'SentinelWeapons']:
-        if 'Prime' in item['name']:
+    for item in weapons['ExportWeapons']:
+        if 'Prime' in item['name'] and item['productCategory'] not in ['SpecialItems', 'SentinelWeapons']:
             item_type = item['productCategory']
             if item_type in translation_dict:
                 item_type = translation_dict[item_type]
