@@ -93,11 +93,11 @@ def encode_and_compress(json_file):
 
 def get_price_history(pd_file=None):
     if pd_file is None:
-        soup = BeautifulSoup(requests.get('http://198.46.233.213/history/').text, 'html.parser')
-        return requests.get(sorted(['http://198.46.233.213/history/' + node.get('href')
+        soup = BeautifulSoup(requests.get('https://relics.run/history/').text, 'html.parser')
+        return requests.get(sorted(['http://relics.run/history/' + node.get('href')
                                     for node in soup.find_all('a') if node.get('href').endswith('json')])[-1]).json()
     else:
-        return requests.get(f"http://198.46.233.213/history/{pd_file}").json()
+        return requests.get(f"https://relics.run/history/{pd_file}").json()
 
 
 def build_price_data(price_history):
