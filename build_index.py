@@ -268,5 +268,5 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
 index_file = build_files()
 
 
-with gzip.open('/var/www/relicsrun/index/index.json.gz', 'wb') as fp:
+with gzip.open('/var/www/html/index/index.json.gz', 'wb') as fp:
     fp.write(encode_and_compress(index_file))
