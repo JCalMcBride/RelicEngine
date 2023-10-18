@@ -13,6 +13,8 @@ def build_relic_list(drop_table: Optional[str]):
     if drop_table is None:
         drop_table = requests.get('https://www.warframe.com/droptables').text
 
+    print(drop_table)
+
     soup = BeautifulSoup(drop_table, 'lxml')
 
     tables = soup.find_all('tr',
