@@ -11,7 +11,7 @@ def __decode_and_decompress(url):
 
 
 def __get_index_file():
-    index = __decode_and_decompress("https://relics.run/index/index.json.gz")
+    index = __decode_and_decompress("http://mercuriusapp.com/index/index.json.gz")
 
     return index
 
