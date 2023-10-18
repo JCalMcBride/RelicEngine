@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 def build_relic_list(drop_table: Optional[str]):
     if drop_table is None:
-        drop_table = requests.get('https://n8k6e2y6.ssl.hwcdn.net/repos/hnfvc0o3jnfvc873njb03enrf56.html').text
+        drop_table = requests.get('https://www.warframe.com/droptables').text
 
     soup = BeautifulSoup(drop_table, 'lxml')
 
