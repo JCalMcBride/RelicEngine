@@ -86,7 +86,7 @@ def add_to_dict_list(dct, key, value):
 
 
 def encode_and_compress(json_file):
-    encoded_list = json.dumps(json_file, indent=4).encode('utf-8')
+    encoded_list = json.dumps(json_file).encode('utf-8')
 
     return encoded_list
 
@@ -107,7 +107,7 @@ def build_price_data(price_history):
     price_data = {}
     for item in price_history:
         if ' Prime ' in item:
-            price_data[item] = price_history[item][0]['avg_price']
+            price_data[item] = int(price_history[item][0]['avg_price'])
 
     return price_data
 
@@ -268,5 +268,5 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
 index_file = build_files()
 
 
-with gzip.open('/var/www/relicsrun/index/index.json.gz', 'wb') as fp:
+with gzip.open('index.json.gz', 'wb') as fp:
     fp.write(encode_and_compress(index_file))
