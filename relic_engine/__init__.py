@@ -57,13 +57,14 @@ def get_set_name(prime_part):
 
 
 def get_drop_chance(refinement: str, rarity_id: int):
+    ref = refinement.lower()[0]
     try:
-        return __rarity_dict[refinement[0]][rarity_id]
+        return __rarity_dict[ref][rarity_id]
     except KeyError:
         drop_chances = []
         for digit in str(rarity_id):
-            if int(digit) in __rarity_dict[refinement[0]]:
-                drop_chances.append(get_drop_chance(refinement[0], int(digit)))
+            if int(digit) in __rarity_dict[ref]:
+                drop_chances.append(get_drop_chance(ref, int(digit)))
             else:
                 return 'N/A'
 
@@ -259,4 +260,3 @@ def get_set_required(set_name):
         required_amount[item] = get_required_amount(item)
 
     return required_amount
-
