@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.2.10' 
+VERSION = '0.2.11' 
 DESCRIPTION = 'Engine for generating dictionaries of relics and prime sets.'
 LONG_DESCRIPTION = 'Engine for generating dictionaries of relics and prime sets using Digital Extreme\'s PC drops website and warframe.market price data.'
 

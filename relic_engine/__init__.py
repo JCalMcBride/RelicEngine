@@ -134,14 +134,17 @@ def get_relic_prices(drops):
     return relic_prices
 
 
-def calculate_average(drops, style_data):
+def calculate_average(drops, style_data, custom_prices=None):
     modifier = style_data[0]
     num_drops = style_data[1]
     chance_left = 1
     chance_used = 1
     average_return = 0
 
-    relic_prices = get_relic_prices(drops)
+    if custom_prices:
+        relic_prices = {k: custom_prices[k] for k in drops if k in custom_prices}
+    else:
+        relic_prices = get_relic_prices(drops)
 
     relic_prices = {k: v for k, v in sorted(relic_prices.items(), key=lambda item: item[1], reverse=True)}
 
@@ -172,7 +175,7 @@ def calculate_average(drops, style_data):
     return average_return
 
 
-def get_average_return(relic, arg1=None, arg2=None):
+def get_average_return(relic, arg1=None, arg2=None, custom_prices=None):
     average_dict = {'s': 1,
                     '1': 4,
                     '2': [2, 2],
@@ -186,7 +189,10 @@ def get_average_return(relic, arg1=None, arg2=None):
     average_return = 0
     if not isinstance(average_dict[style], list):
         for relic_drop in drops:
-            price = get_price(relic_drop)
+            if custom_prices and relic_drop in custom_prices:
+                price = custom_prices[relic_drop]
+            else:
+                price = get_price(relic_drop)
             chance = drops[relic_drop]
 
             try:
@@ -197,7 +203,7 @@ def get_average_return(relic, arg1=None, arg2=None):
 
         average_return *= average_dict[style]
     else:
-        average_return = calculate_average(drops, average_dict[style])
+        average_return = calculate_average(drops, average_dict[style], custom_prices)
 
     return round(average_return, 3)
 
