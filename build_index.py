@@ -1,12 +1,29 @@
 import gzip
 import json
 import lzma
+import os
 import re
 from pprint import pprint
 from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
+
+
+def add_manual_relics(relic_list):
+    for relic_file in os.listdir('manual_relics'):
+        with open(f'manual_relics/{relic_file}', 'r') as fp:
+            relic_data = json.load(fp)
+
+        relic = next(iter(relic_data))
+
+        drop_dict = {}
+        for drop in relic_data[relic]["Intact"]["drops"]:
+            drop_dict[drop] = relic_data[relic]["Intact"]["drops"][drop]["tier_id"]+1
+
+        relic_list[relic] = drop_dict
+
+    return relic_list
 
 
 def build_relic_list(drop_table: Optional[str]):
@@ -50,6 +67,8 @@ def build_relic_list(drop_table: Optional[str]):
                 relic_drops[item_name] = int(''.join(tier_ids))
 
         relic_list[relic] = dict(sorted(relic_drops.items(), reverse=True, key=lambda x: str(x[1])))
+
+    relic_list = add_manual_relics(relic_list)
 
     tables = soup.find_all('tr', string=lambda t: t and any(x in t for x in ['(Exterminate)', '(Capture)', '(Defense)',
                                                                              '(Mobile Defense)', '(Sabotage)',
