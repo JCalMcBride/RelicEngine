@@ -1,4 +1,6 @@
 import gzip
+import warnings
+from typing import Dict, Tuple, List
 import json
 
 import requests
@@ -266,3 +268,149 @@ def get_set_required(set_name):
         required_amount[item] = get_required_amount(item)
 
     return required_amount
+
+
+PAlist = {
+    "prime access": {
+        "Ash": "Carrier,Vectis",
+        "Atlas": "Dethcube,Tekko",
+        "Banshee": "Euphona,Helios",
+        "Chroma": "Gram,Rubico",
+        "Ember": "Sicarus,Glaive",
+        "Equinox": "Stradavar,Tipedo",
+        "Frost": "Latron,Reaper",
+        "Gara": "Astilla,Volnus",
+        "Hydroid": "Ballistica,Nami Skyla",
+        "Inaros": "Karyst,Panthera",
+        "Ivara": "Baza,Aksomati",
+        "Limbo": "Destreza,Pyrana",
+        "Loki": "Bo,Wyrm",
+        "Mag": "Boar,Dakra",
+        "Mesa": "Akjagara,Redeemer",
+        "Mirage": "Akbolto,Kogake",
+        "Nekros": "Galatine,Tigris",
+        "Nezha": "Guandao,Zakti",
+        "Nidus": "Magnus,Strun",
+        "Nova": "Soma,Vasto",
+        "Nyx": "Hikou,Scindo",
+        "Oberon": "Sybaris,Silva & Aegis",
+        "Octavia": "Pandero,Tenora",
+        "Rhino": "Ankyros,Boltor",
+        "Saryn": "Nikana,Spira",
+        "Titania": "Corinth,Pangolin",
+        "Trinity": "Kavasa,Dual Kamas",
+        "Valkyr": "Cernos,Venka",
+        "Vauban": "Akstiletto,Fragor",
+        "Volt": "Odonata",
+        "Wukong": "Ninkondi,Zhuge",
+        "Zephyr": "Kronen,Tiberon",
+        "Harrow": "Knell,Scourge",
+        "Garuda": "Corvas,Nagantaka",
+        "Khora": "Hystrix,Dual Keres",
+        "Revenant": "Phantasma,Tatsu",
+        "Baruuk": "Afuris,Cobra & Crane",
+        "Hildryn": "Larkspur,Shade",
+        "Wisp": "Fulmin,Gunsen",
+        "Grendel": "Zylok,Masseter",
+        "Gauss": "Akarius,Acceltra",
+        "Protea": "Velox,Okina"
+    }
+}
+
+
+def _build_relic_data(relic_dict: Dict, price_dict: Dict, ducat_dict: Dict, nv_relics: List[str]) -> Dict:
+    """Helper function to build relic data."""
+    relic_data = {}
+    tier_map = {3: 'Rare', 2: 'Uncommon', 1: 'Common'}
+
+    for relic, drops in relic_dict.items():
+        relic_data[relic] = {}
+        for refinement in ['Intact', 'Exceptional', 'Flawless', 'Radiant']:
+            relic_data[relic][refinement] = {
+                'drops': {},
+                'vaulted': relic not in nv_relics,
+                'average_return': {}
+            }
+
+            for part, rarity in drops.items():
+                tier_id = int(str(rarity)[0]) - 1  # Take first digit and shift by 1
+                chance = get_drop_chance(refinement[0], rarity)
+
+                relic_data[relic][refinement]['drops'][part] = {
+                    'chance': chance,
+                    'tier': tier_map[tier_id + 1],
+                    'tier_id': tier_id,
+                    'price': price_dict.get(part, 0),
+                    'ducats': ducat_dict.get(part, 0),
+                    'calculated_chance': {style: None for style in ['solo', '1b1', '2b2', '3b3', '4b4']},
+                    'calculated_price': {style: None for style in ['solo', '1b1', '2b2', '3b3', '4b4']}
+                }
+
+            avg_return = get_average_return(relic, refinement[0], '4')
+            relic_data[relic][refinement]['average_return'] = {
+                'solo': get_average_return(relic, refinement[0], 's'),
+                '1b1': get_average_return(relic, refinement[0], '1'),
+                '2b2': get_average_return(relic, refinement[0], '2'),
+                '3b3': get_average_return(relic, refinement[0], '3'),
+                '4b4': avg_return
+            }
+
+    return relic_data
+
+
+def _build_set_data(relic_data: Dict, relic_dict: Dict, price_dict: Dict, ducat_dict: Dict, required_dict: Dict,
+                    type_dict: Dict) -> Dict:
+    """Helper function to build set data."""
+    set_data = {}
+    for set_name in get_set_list():
+        set_name_without_set = set_name.replace(' Set', '')
+        set_data[set_name_without_set] = {
+            'parts': {},
+            'vaulted': all(relic_data[relic]['Intact']['vaulted'] for relic in relic_dict if
+                           any(part in relic_dict[relic] for part in get_set_parts(set_name_without_set))),
+            'type': type_dict.get(set_name_without_set, type_dict.get(set_name, 'N/A')),
+            'plat': price_dict.get(set_name, 0),
+            'prime-access': next((frame for frame, items in PAlist['prime access'].items() if
+                                  set_name_without_set.split()[0] in [frame] + items.split(',')), 'N/A')
+        }
+
+        for part in get_set_parts(set_name_without_set):
+            set_data[set_name_without_set]['parts'][part] = {
+                'plat': price_dict.get(part, 0),
+                'ducats': ducat_dict.get(part, 0),
+                'required': required_dict.get(part, 1)
+            }
+    return set_data
+
+
+def build_json_files(pd_file: str = None) -> Tuple[Dict, Dict]:
+    """
+    Build JSON files containing relic and set data for backwards compatibility.
+
+    Note: This function is maintained for backwards compatibility only.
+    It is recommended to use other specific functions when possible.
+
+    Args:
+        pd_file (str, optional): Price data file. This parameter is deprecated and not used in the current implementation.
+
+    Returns:
+        Tuple[Dict, Dict]: A tuple containing relic_data and set_data dictionaries.
+    """
+    if pd_file is not None:
+        warnings.warn("The 'pd_file' parameter is deprecated and not used in the current implementation.",
+                      DeprecationWarning, stacklevel=2)
+
+    # Fetch required data
+    relic_dict = get_relic_dict()
+    price_dict = get_price_dict()
+    ducat_dict = get_ducat_dict()
+    required_dict = get_required_dict()
+    nv_relics = get_non_vaulted_relics()
+    type_dict = get_type_dict()
+
+    # Build relic and set data
+    relic_data = _build_relic_data(relic_dict, price_dict, ducat_dict, nv_relics)
+    set_data = _build_set_data(relic_data, relic_dict, price_dict, ducat_dict, required_dict, type_dict)
+
+    # Convert to JSON-compatible format
+    return json.loads(json.dumps(relic_data)), json.loads(json.dumps(set_data))
