@@ -207,7 +207,7 @@ def get_manifest():
     return recipes, resources, warframes, weapons, sentinels
 
 
-def build_parser(resources, warframes, weapons):
+def build_parser(resources, warframes, weapons, sentinels):
     parser = {}
 
     for item in resources['ExportResources']:
@@ -225,6 +225,10 @@ def build_parser(resources, warframes, weapons):
         if "Prime" in item['name'] and item['productCategory'] not in ['SpecialItems', 'SentinelWeapons']:
             parser[item['uniqueName']] = item['name']
 
+    for item in sentinels['ExportSentinels']:
+        if "Prime" in item['name'] and item['productCategory'] not in ['SpecialItems']:
+            parser[item['uniqueName']] = item['name']
+
     return parser
 
 
@@ -232,7 +236,7 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
     if any(x is None for x in [recipes, resources, warframes, weapons, sentinels]):
         recipes, resources, warframes, weapons, sentinels = get_manifest()
 
-    parser = build_parser(resources, warframes, weapons)
+    parser = build_parser(resources, warframes, weapons, sentinels)
 
     required_dict = {}
     ducat_dict = {}
@@ -242,7 +246,7 @@ def get_mainfest_data(recipes=None, resources=None, warframes=None, weapons=None
         if item['resultType'] in parser:
             item_name = parser[item['resultType']] + " Blueprint"
 
-            ducat_dict[item_name] = item['primeSellingPrice']
+            ducat_dict[item_name] = item.get('primeSellingPrice', 0)
 
             for sub_item in item['ingredients']:
                 if sub_item['ItemType'] in parser:
