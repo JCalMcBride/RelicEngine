@@ -11,6 +11,9 @@ from bs4 import BeautifulSoup
 
 
 def add_manual_relics(relic_list):
+    if not os.path.exists('manual_relics'):
+        return relic_list
+
     for relic_file in os.listdir('manual_relics'):
         with open(f'manual_relics/{relic_file}', 'r') as fp:
             relic_data = json.load(fp)
