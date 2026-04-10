@@ -56,7 +56,7 @@ def build_relic_list(drop_table: Optional[str]):
             if sibling.find("th"):
                 break
             item_contents = sibling.find_all("td")
-            if item_contents:
+            if len(item_contents) >= 2:
                 items.append(sibling)
 
         # Build the tier mapping dynamically from the unique percentage strings
