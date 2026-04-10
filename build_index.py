@@ -42,8 +42,6 @@ def build_relic_list(drop_table: Optional[str]):
     prime_part_list = []
 
     for table in tables:
-        items = table.find_all_next("tr", limit=6)
-
         raw_relic = table.find("th").contents[0].split("Relic")[0].rstrip().split()
 
         try:
@@ -51,7 +49,28 @@ def build_relic_list(drop_table: Optional[str]):
         except IndexError:
             continue
 
-        chance_dict = {'Uncommon (25.33%)': 1, 'Uncommon (11.00%)': 2, 'Rare (2.00%)': 3}
+        # Collect all item rows for this relic, stopping at the next header row.
+        # This handles relics with any number of drops (e.g. Requiem Eterna has 8).
+        items = []
+        for sibling in table.find_all_next("tr"):
+            if sibling.find("th"):
+                break
+            item_contents = sibling.find_all("td")
+            if item_contents:
+                items.append(sibling)
+
+        # Build the tier mapping dynamically from the unique percentage strings
+        # present in this relic, sorted descending so the most-common drop is
+        # always tier 1.  This handles both the standard 3-tier relics and new
+        # equal-chance relics like Requiem Eterna without hard-coding percentages.
+        seen_pcts: list = []
+        for item in items:
+            pct_str = item.find_all("td")[1].contents[0]
+            if pct_str not in seen_pcts:
+                seen_pcts.append(pct_str)
+
+        seen_pcts.sort(key=lambda s: float(re.search(r'[\d.]+', s).group()), reverse=True)
+        chance_dict = {pct: i + 1 for i, pct in enumerate(seen_pcts)}
 
         relic_drops = {}
         for item in items:
